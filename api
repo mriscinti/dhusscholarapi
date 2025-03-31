@@ -1,0 +1,67 @@
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+const team = [
+  { name: "Matthew Riscinti", scholarId: "84y7LJsAAAAJ" },
+  { name: "Amanda Toney", scholarId: "0ng0NC8AAAAJ" },
+  { name: "Nhu-Nguyen Le", scholarId: "McxOucoAAAAJ" },
+  { name: "Fred Milgrim", scholarId: "95Go9AAAAAJ" },
+  { name: "Molly Thiessen", scholarId: "J8hM6OAAAAAJ" },
+];
+
+const API_KEY = "f61bbbcde46f3476b911774d0b6d35b2e533dfe395565f402f9c8003f88466ea";
+
+export default function TeamScholarProfiles() {
+  const [profiles, setProfiles] = useState([]);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const results = await Promise.all(
+        team.map(async (member) => {
+          const res = await axios.get("https://serpapi.com/search.json", {
+            params: {
+              engine: "google_scholar_author",
+              author_id: member.scholarId,
+              api_key: API_KEY,
+            },
+          });
+          return { ...member, data: res.data };
+        })
+      );
+      setProfiles(results);
+    };
+
+    fetchProfiles();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+      {profiles.map((profile) => (
+        <Card key={profile.scholarId} className="rounded-2xl shadow-md p-4">
+          <CardContent>
+            <h2 className="text-xl font-bold mb-1">{profile.name}</h2>
+            {profile.data.author && (
+              <a
+                href={profile.data.author.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-sm"
+              >
+                View Google Scholar Profile
+              </a>
+            )}
+            <ul className="mt-3 space-y-1 text-sm">
+              {profile.data.articles?.slice(0, 5).map((pub, idx) => (
+                <li key={idx}>
+                  • {pub.title} ({pub.year || "n.d."})
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
